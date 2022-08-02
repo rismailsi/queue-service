@@ -4,17 +4,17 @@ import { Injectable } from "@angular/core";
   providedIn: 'root'
 })
 export class QueueService<T> {
-  private queue: {[id: string]: Promise<any>[]} = {};
+  private queue: {[id: string]: (()=>Promise<any>)[]} = {};
   private results: {[id: string]: any[]} = {};
   private isRunning: {[id: string]: boolean} = {};
 
-  async execute(id: string, runnable: Promise<T>): Promise<T[]> {
+  async execute(id: string, promisable: () => Promise<T>): Promise<T[]> {
     if (!this.queue[id]) {
-      this.queue[id] = [runnable];
+      this.queue[id] = [promisable];
       this.results[id] = [];
       this.isRunning[id] = false;
     } else {
-      this.queue[id].push(runnable);
+      this.queue[id].push(promisable);
     }
 
     return new Promise<T[]>(async (resolve, reject) => {
@@ -26,6 +26,7 @@ export class QueueService<T> {
         resolve(this.results[id]);
       } else {
         while (this.isRunning[id]) {
+          console.log('ku menunggu');
           await sleep(100);
         }
         resolve(this.results[id]);
@@ -35,12 +36,14 @@ export class QueueService<T> {
 
   private async run(id: string, i = 0): Promise<any> {
     this.isRunning[id] = true;
-    await this.queue[id][i].then(data => this.results[id][i] = data);
+    await this.queue[id][i]().then(data => {
+      console.log('resolved', id, i, data);
+      this.results[id][i] = data;
+    });
     if (this.queue[id][i + 1] !== undefined) {
       return await this.run(id, i + 1);
     } else {
-      this.queue[id] = [];
-      this.results[id] = [];
+      delete this.queue[id];
       this.isRunning[id] = false;
       return Promise.resolve();
     }
