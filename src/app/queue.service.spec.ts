@@ -1,7 +1,7 @@
 import { TestBed, waitForAsync } from '@angular/core/testing';
 
 import { HttpClientModule } from '@angular/common/http';
-import { QueueService, sleep } from './queue.service';
+import { QueueService } from './queue.service';
 
 describe('QueueService', () => {
   let queueService: QueueService<any>;
@@ -22,7 +22,7 @@ describe('QueueService', () => {
   });
 
 
-  it('run single queue, should return correct oder', async () => {
+  it('run single queue using then, should return correct oder', async () => {
     let order: string[] = [];
     queueService.execute('1', () => new Promise<object>((resolve, reject) => {
       setTimeout(() => resolve({value: 'A-1'}), Math.random()*1000)
@@ -47,7 +47,9 @@ describe('QueueService', () => {
     console.log('A-3 requested and waited');
 
     expect(order).toEqual(['A-1', 'A-2', 'A-3']);
+  });
 
+  it('run single queue using await, should return correct oder', async () => {
     queueService.execute('2', () => new Promise<object>((resolve, reject) => {
       setTimeout(() => resolve({value: 'B-1'}), Math.random()*1000)
       }));
@@ -62,7 +64,6 @@ describe('QueueService', () => {
     console.log('B-3 requested and waited');
 
     expect(orderB).toEqual([{value: 'B-1'}, {value: 'B-2'}, {value: 'B-3'}]);
-
   });
 
   it('run multiple queue, should return correct oder on each queue', async () => {
@@ -111,5 +112,22 @@ describe('QueueService', () => {
     setTimeout(() => {
       expect(orderC).toEqual(['C-1', 'C-2', 'C-3']);
     }, 1000);
+  });
+
+  it('having one rejected, should still run next task', async () => {
+    queueService.execute('2', () => new Promise<object>((resolve, reject) => {
+      setTimeout(() => resolve({value: 'E-1'}), Math.random()*1000)
+      }));
+    console.log('E-1 requested');
+    queueService.execute('2', () => new Promise<object>((resolve, reject) => {
+      setTimeout(() => reject({value: 'E-2'}), Math.random()*1000)
+      }));
+    console.log('E-2 requested');
+    const orderB = await queueService.execute('2', () => new Promise<object>((resolve, reject) => {
+      setTimeout(() => resolve({value: 'E-3'}), Math.random()*1000)
+      }));
+    console.log('E-3 requested and waited');
+
+    expect(orderB).toEqual([{value: 'E-1'}, {value: 'E-2'}, {value: 'E-3'}]);
   });
 });

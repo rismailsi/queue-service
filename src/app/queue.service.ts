@@ -20,13 +20,10 @@ export class QueueService<T> {
     return new Promise<T[]>(async (resolve, reject) => {
       let i = 0;
       if (!this.isRunning[id]) {
-        console.log('run the queue', id);
         await this.run(id);
-        console.log('result', this.results[id]);
         resolve(this.results[id]);
       } else {
         while (this.isRunning[id]) {
-          console.log('ku menunggu');
           await sleep(100);
         }
         resolve(this.results[id]);
@@ -36,9 +33,11 @@ export class QueueService<T> {
 
   private async run(id: string, i = 0): Promise<any> {
     this.isRunning[id] = true;
+
     await this.queue[id][i]().then(data => {
-      console.log('resolved', id, i, data);
       this.results[id][i] = data;
+    }).catch(reason => {
+      this.results[id][i] = reason;
     });
     if (this.queue[id][i + 1] !== undefined) {
       return await this.run(id, i + 1);
