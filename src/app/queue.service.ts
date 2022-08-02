@@ -20,7 +20,7 @@ export class QueueService<T> {
     return new Promise<T[]>(async (resolve, reject) => {
       let i = 0;
       if (!this.isRunning[id]) {
-        console.log('run the damn thing');
+        console.log('run the queue', id);
         await this.run(id);
         console.log('result', this.results[id]);
         resolve(this.results[id]);
