@@ -23,11 +23,6 @@ describe('QueueService', () => {
 
 
   it('should return correct oder', async () => {
-
-    new Promise<object>((resolve, reject) => {
-      setTimeout(() => resolve({value: 'A-2'}), Math.random()*1000)
-      }).then(data => console.log('111111111111', data))
-
     let order: string[] = [];
     queueService.execute('1', new Promise<object>((resolve, reject) => {
       setTimeout(() => resolve({value: 'A-1'}), Math.random()*1000)
