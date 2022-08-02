@@ -25,7 +25,6 @@ export class QueueService<T> {
         console.log('result', this.results[id]);
         resolve(this.results[id]);
       } else {
-        // TODO: wait until is isRunning[id] == false then we can resolve
         while (this.isRunning[id]) {
           await sleep(100);
         }
@@ -36,7 +35,7 @@ export class QueueService<T> {
 
   private async run(id: string, i = 0): Promise<any> {
     this.isRunning[id] = true;
-    await this.queue[id][i].then(response => response.json()).then(data => this.results[id][i] = data);
+    await this.queue[id][i].then(data => this.results[id][i] = data);
     if (this.queue[id][i + 1] !== undefined) {
       return await this.run(id, i + 1);
     } else {

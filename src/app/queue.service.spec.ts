@@ -23,18 +23,35 @@ describe('QueueService', () => {
 
 
   it('should return correct oder', async () => {
-    queueService.execute('1', fetch('https://jsonplaceholder.typicode.com/posts')).then((values) => console.log('received posts', values));
-    console.log('posts requested')
-    queueService.execute('1', fetch('https://jsonplaceholder.typicode.com/comments')).then((values) => console.log('received comments', values));
-    console.log('comments requested')
-    queueService.execute('1', fetch('https://jsonplaceholder.typicode.com/albums')).then((values) => console.log('received albums', values));
-    console.log('albums requested')
 
-    queueService.execute('2', fetch('https://jsonplaceholder.typicode.com/todos')).then((values) => console.log('received todos', values));
-    console.log('todos requested')
-    queueService.execute('2', fetch('https://jsonplaceholder.typicode.com/photos')).then((values) => console.log('received photos', values));
-    console.log('photos requested')
-    queueService.execute('2', fetch('https://jsonplaceholder.typicode.com/users')).then((values) => console.log('received users', values));
-    console.log('users requested')
+    new Promise<object>((resolve, reject) => {
+      setTimeout(() => resolve({value: 'A-2'}), Math.random()*1000)
+      }).then(data => console.log('111111111111', data))
+
+    let order: string[] = [];
+    queueService.execute('1', new Promise<object>((resolve, reject) => {
+      setTimeout(() => resolve({value: 'A-1'}), Math.random()*1000)
+      })).then((values) => {
+      console.log('received A-1', values);
+      order.push('A-1');
+    });
+    console.log('A-1 requested');
+    queueService.execute('1', new Promise<object>((resolve, reject) => {
+      setTimeout(() => resolve({value: 'A-2'}), Math.random()*1000)
+      })).then((values) => {
+      console.log('received A-2', values);
+      order.push('A-2');
+    });
+    console.log('A-2 requested');
+    await queueService.execute('1', new Promise<object>((resolve, reject) => {
+      setTimeout(() => resolve({value: 'A-3'}), Math.random()*1000)
+      })).then((values) => {
+        console.log('received A-3', values);
+        order.push('A-3');
+      });
+    console.log('A-3 requested and waited');
+
+    expect(order).toEqual(['A-1', 'A-2', 'A-3']);
+
   });
 });
